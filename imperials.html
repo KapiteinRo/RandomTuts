@@ -1,0 +1,199 @@
+<html>
+  <head>
+    <title>Metrics to Imperials</title>
+    <script language="javascript">
+        // get the correct length in metres..
+        function getCorrectedMetres(num, unit) {
+          // if unit is 'm', then it already is the length in metres..
+          // otherwise assume it's 'km' and then multiply by 1000
+          // divide all to 1, so the return value is a float.
+          return (unit === 'm' ? num : num * 1000) / 1;
+        }
+
+        // list of imperial units from largest to smallest.
+        // value in metres, name, plural form of the name.
+        var imperials = [
+          { value: 4827, name: 'league', plur: 'leagues' },
+          { value: 1609, name: 'mile', plur: 'miles' },
+          { value: 201, name: 'furlong', plur: 'furlongs' },
+          { value: 20, name: 'chain', plur: 'chains' },
+          { value: 5, name: 'rod', plur: 'rods' },
+          { value: 1.8, name: 'fathom', plur: 'fathoms' },
+          { value: 0.91, name: 'yard', plur: 'yards' },
+          { value: 0.457, name: 'cubit', plur: 'cubits' },
+          { value: 0.304, name: 'foot', plur: 'feet' },
+          { value: 0.228, name: 'span', plur: 'spans' },
+          { value: 0.0762, name: 'palm', plur: 'palms' },
+          { value: 0.0254, name: 'inch', plur: 'inches' },
+          { value: 0.0085, name: 'barleycorn', plur: 'barleycorns' },
+          { value: 0.002125, name: 'poppyseed', plur: 'poppyseeds' }
+        ];
+
+        // calculate the distance.
+        function calcValue(num, unit) {
+          // set temporary output.. 
+          document.getElementById('iout').innerHTML = m + "m processing...";
+          // get the correct amount of metres.
+          var m = getCorrectedMetres(num, unit);
+          // initialise output array
+          var imps = [];
+          // index of imperials
+          var i = 0;
+
+          // loop through the list of imperial units,
+          // until the remainder is less than 0.0005m,
+          // or the end of the list of imperial units has been reached.
+          while (m > 0.0005 && i < imperials.length) {
+            // divide m by the value of the imperial unit
+            var div = m / imperials[i].value;
+            // if the result is more than 1..
+            if (div >= 1) {
+              // convert result to a whole integer.
+              // using the floor function: 5.02 becomes 5, and 5.998 becomes 5 as well.
+              var res = Math.floor(div);
+              // build a string that eventually contains '10 feet' or something.
+              var imp = res + ' ';
+              // if result is more than one, use the plural of the unit name.
+              if (res > 1) {
+                // ie. '10 feet'
+                imp += imperials[i].plur;
+              } else {
+                // ie. '1 foot'
+                imp += imperials[i].name;
+              }
+              // push the string to the stack of output values.
+              imps.push(imp);
+              // calculate the remainder of the division, that value will be the
+              // 'left-over' with which the next unit will be divided with.
+              m = m % imperials[i].value;
+            }
+            // ostensible debug information, you can find it in the console (F12 in the sensible browser).
+            console.log('Remainder after ' + div + ' "' + imperials[i].name + '": ' + m);
+            // increment the index so it will get the next imperial unit in the list.
+            i++;
+          }
+
+          // now form the output.. I want the separate all the outputs with a comma, except the last one.
+          // ie. '1 yard, 2 feet and 13 inches' instead of '1 yard, 2 feet, 13 inches'.
+          // so I'll have to divide the list of outputs into 'everything before the last item' and 'the last item'
+          // so, if there are more than one outputs:
+          if (imps.length > 1) {
+            // slice the outputs into a list with all the outputs minus the last.
+            var preimps = imps.slice(0, imps.length - 1);
+            // glue them together, the first ones seperated with a comma, and the last one after the 'and'.
+            document.getElementById('iout').innerHTML = preimps.join(', ') + ' and ' + imps[imps.length - 1];
+          } else {
+            // just output the first one
+            document.getElementById('iout').innerHTML = imps[0];
+          }
+        }
+
+        // this function is called when the page is loaded,
+        // it will check whether the page is loaded after a GET-submit.
+        function checkSubmit() {
+          // a GET submit means there is a question mark in the url..
+          // parameters are passed this way: http://your.url/bla.html?key1=value1&key2=blabla
+          if (this.location.href.indexOf('?') > 0) {
+            // split everything off, behind the questionmark
+            var params = this.location.href.split('?')[1];
+            // seperate that between the ampersands
+            var args = params.split('&');
+            // set default values
+            var num = 0;
+            var unit = 'm';
+            // loop through all the parameters
+            for (var i = 0; i < args.length; i++) {
+              // separate keys and values
+              var tmp = args[i].split('=');
+              if (tmp[0] === 'num'){
+                // if the key has the name 'num', we must assume it's the number field with the same name
+                num = parseFloat(tmp[1]);
+              } else if (tmp[0] === 'unit') {
+                // if the key has the name 'unit', it's from the selector which was named 'unit'.
+                unit = tmp[1];
+              }
+            }
+
+            // it's good practise to fill the form again with the submitted data.
+            // first, set the number field.
+            document.minput.num.value = num;
+            // then set the selector, we do this by setting the selectedIndex property.
+            // but first, we have to find the correct index
+            var sunit = document.getElementById('unit');
+            // loop through all the items in the selector
+            for (var i = 0; i < sunit.options.length; i++) {
+              // if the value of the item in the selector equals the submitted value,
+              // we know that i holds the correct index.
+              if (sunit.options[i].value === unit) {
+                // set the selectedIndex to i
+                sunit.selectedIndex = i;
+                // break out of this loop.
+                break;
+              }
+            }
+
+            // to prevent other values and breaking the calculation, check if num is higher than 0.
+            if (num > 0) {
+              calcValue(num, unit);
+            } else {
+              // else, display an error message.
+              document.getElementById('iout').innerHTML = "Use a correct number higher than 0!"
+            }
+
+          } else {
+            // not from a submit? Then put the cursor in the number field.
+            document.minput.num.focus();
+          }
+        }
+    </script>
+    <style>
+      /* set the standard font in this page to Segoe UI */
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      /* we want all the inputs and the selector to have:
+         * a height of 24 pixels.
+         * a rounded corner of 3 pixels in diameter.
+         * a solid grey border of 1 pixel thickness.
+      */
+      input, select {
+        height: 24px;
+        border-radius: 3px;
+        border: 1px solid #999;
+      }
+      /* the text input field should be aligned to right (as is with numbers)
+         and a padding on the right side of 5 pixels, so the input isn't wedged to the edge. 
+      */
+      input[type='text'] {
+        text-align: right;
+        padding-right: 5px;
+      }
+      /* the output area (with id 'iout') should have a whitesmoke background color,
+         5 pixels padding on all sides and rounded corners of 3 pixels.
+      */
+      #iout {
+        background-color: #f5f5f5;
+        padding: 5px;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body onload="checkSubmit();">
+    <h1>Metrics to Imperials</h1>
+    <form name="minput" method="GET">
+      <p>
+        <label for="num">Length:</label>
+        <input type="text" size="5" id="num" name="num" />
+        <select name="unit" id="unit" size="1">
+          <option value="m">metres.</option>
+          <option value="km">kilometres.</option>
+        </select>
+        <input type="submit" value="Go!" />
+      </p>
+      <p>
+        <label for="iout">Output:</label>
+        <span name="iout" id="iout">...</span>
+      </p>
+    </form>
+  </body>
+</html>
