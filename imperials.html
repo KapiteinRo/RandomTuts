@@ -31,14 +31,14 @@
 
         // calculate the distance.
         function calcValue(num, unit) {
-          // set temporary output.. 
-          document.getElementById('iout').innerHTML = m + "m processing...";
           // get the correct amount of metres.
           var m = getCorrectedMetres(num, unit);
           // initialise output array
           var imps = [];
           // index of imperials
           var i = 0;
+          // set temporary output.. 
+          document.getElementById('iout').innerHTML = m + "m processing...";
 
           // loop through the list of imperial units,
           // until the remainder is less than 0.0005m,
